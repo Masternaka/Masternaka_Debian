@@ -30,7 +30,7 @@ if $dry_run; then
     if ! $only_config; then
         printf 'Paquets (sources officielles trixie, trixie-updates et trixie-security) :\n%s\n' "${packages[*]}"
         printf 'Services activés pour le prochain démarrage : LightDM et NetworkManager.\n'
-        printf 'Compilation locale : Picom 13 (commit fixé) et Rofi 2.0.0 (SHA-256 vérifié).\n'
+        printf 'Picom et Rofi : références de packages/versions.env, compilation seulement si nécessaire.\n'
     fi
     exit 0
 fi

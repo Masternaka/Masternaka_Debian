@@ -7,7 +7,7 @@ Mis à jour le 28 septembre 2026. Cible : **Debian 13 Stable (trixie), avec i3/X
 Ce document inventorie toutes les dépendances **explicitement déclarées par le
 projet actuel**, les outils système utilisés par ses scripts et les outils de
 validation. Les listes de référence sont `packages/base.txt`, `packages/build.txt`,
-`packages/versions.env` et `.github/workflows/validate.yml`.
+`packages/versions.env` et les scripts de `tests/`.
 
 Les bibliothèques installées indirectement par APT ne sont pas figées une par une :
 leur liste et leurs versions varient selon l’architecture, les mises à jour de
@@ -16,19 +16,25 @@ l’inventaire exact d’une installation. Ce document ne prétend pas fournir u
 fichier de verrouillage de toutes les dépendances transitives.
 
 **Les commandes d’installation ci-dessous s’exécutent sur Debian 13, pas sur macOS.**
-Depuis un Mac, la compilation et les tests peuvent être lancés sur GitHub Actions
-avec le workflow fourni ; voir `docs/PUBLICATION_MAC.md`.
+Aucun workflow GitHub Actions n’est actuellement fourni ; voir
+`docs/PUBLICATION_MAC.md` pour les limites des vérifications depuis un Mac.
 
 ## 2. Debian Stable et composants externes
 
 | Composant | Version dans Debian 13 observée lors de l’audit | Version retenue | Origine utilisée |
 |---|---|---|---|
 | Picom | 12.5-1 | **13** | Dépôt officiel `yshui/picom`, compilation au commit fixé |
-| Rofi | 1.7.5 (révision Debian variable) | **2.0.0** | Archive officielle `davatorium/rofi`, SHA-256 fixé |
+| Rofi | 1.7.5-0.1 (révision variable selon l’architecture) | **2.0.0** | Archive officielle `davatorium/rofi`, SHA-256 fixé |
 | Polybar | 3.7.2 | Version du paquet trixie | Debian Stable |
 | Kitty | Version du paquet trixie et ses mises à jour | Paquet Debian | Debian Stable |
 | Autres paquets des sections 3 et 4 | Versions résolues par APT | Paquets Debian | Debian Stable |
 | Configurations, scripts et douze palettes | Fichiers du projet | Version du dépôt Masternaka | Inclus dans le projet |
+
+Versions Debian de Picom et Rofi revérifiées le 28 septembre 2026 sur les
+[fiches Picom](https://packages.debian.org/trixie/picom) et
+[Rofi](https://packages.debian.org/trixie/rofi). Cette vérification établit leur
+disponibilité, pas la compatibilité de la configuration. Les versions des autres
+paquets n’ont pas été revérifiées lors de ce contrôle.
 
 **Picom et Rofi existent dans Debian Stable : ce sont les versions retenues ici
 qui sont externes aux suites Stable utilisées.** On ne dit donc pas que ces deux
@@ -36,8 +42,9 @@ logiciels sont entièrement absents de Debian. Le projet n’utilise ni Testing/
 ni les backports pour les obtenir. Les versions de Stable peuvent évoluer ; les
 valeurs ci-dessus décrivent l’audit, pas une garantie permanente.
 
-Le choix de Picom 13 conserve les animations et les règles du projet d’origine,
-avec une base amont plus récente. Les animations existent déjà en Picom 12 :
+Le projet conserve Picom 13 et Rofi 2.0.0 par choix de maintenance de versions
+récentes, indépendantes de Debian Stable. Picom conserve les animations et les
+règles du bureau. Les animations existent déjà en Picom 12 :
 Picom 13 n’est pas présenté comme un minimum prouvé pour chaque option.
 De même, l’archive d’origine ne déclare pas de minimum Rofi ; 2.0.0 est la version
 fixée pour cette adaptation, pas un minimum technique démontré.
@@ -122,7 +129,7 @@ installés par APT ; Picom et Rofi Debian restent présents comme solutions de s
 | `papirus-icon-theme` | Icônes Papirus/Papirus-Dark. |
 | `procps` | Commandes pgrep et pkill utilisées par les scripts. |
 | `psmisc` | Utilitaires de gestion des processus ; paquet conservé dans le manifeste. |
-| `util-linux` | Utilitaires système, notamment runuser dans les tests. |
+| `util-linux` | `flock`, verrou obligatoire de `scripts/build-desktop.sh` ; version du paquet non vérifiée. Également `runuser` pour les tests Linux. |
 | `ca-certificates` | Certificats racines pour les connexions HTTPS. |
 
 Les métapaquets regroupent plusieurs composants : `pipewire-audio` apporte
@@ -206,7 +213,7 @@ système Linux autonome et suppose une installation Debian fonctionnelle.
 |---|---|
 | `bash` | Exécution des scripts et utilisation des tableaux Bash |
 | `coreutils` | `cp`, `mv`, `mkdir`, `rm`, `chmod`, `date`, `mktemp`, `sha256sum`, `id`, `ln`, `head`, `sort`, `cut`, etc. |
-| `findutils` | Recherche de fichiers avec `find`, traitement des paquets avec `xargs` en CI |
+| `findutils` | Recherche des palettes locales avec `find` |
 | `grep`, `sed` | Analyse et modification de texte |
 | `mawk` ou `gawk` | Fourniture de `awk`, utilisé pour les palettes, les menus et les écrans |
 | `tar`, `gzip` | Extraction de l’archive `.tar.gz` Rofi |
@@ -228,20 +235,14 @@ une session root, puis se reconnecter après l’ajout au groupe `sudo`.
 
 | Dépendance | Origine | Utilisation |
 |---|---|---|
-| `python3` | Debian | Six tests locaux de déploiement et de sauvegarde |
+| `python3` | Debian | Tests de déploiement, sauvegardes et gestion des versions avec compilation simulée |
 | `shellcheck` | Debian | Analyse statique des scripts shell |
 | `xvfb` | Debian | Serveur X virtuel pour les tests graphiques |
 | `xauth` | Debian | Authentification X pour `xvfb-run` |
 | `sudo`, `util-linux`, `passwd` | Debian | Préparation et exécution des tests avec un utilisateur dédié |
-| `debian:13` | Image de conteneur utilisée par GitHub Actions | Environnement de test Debian 13 |
-| `actions/checkout@v4` | Action GitHub externe aux dépôts APT | Récupération des fichiers du projet dans le workflow |
-| Service GitHub Actions et son runner | Infrastructure GitHub | Exécution distante depuis un navigateur ou un Mac |
 
-Les trois dernières lignes sont des dépendances externes **de validation**,
-pas des logiciels à installer sur le bureau Debian. L’image et l’action sont
-actuellement référencées par étiquette/version majeure, pas par digest/commit
-immuable ; leur reproductibilité est donc différente de celle des sources fixées
-Picom et Rofi. Docker n’est pas requis sur le Mac pour lancer ce workflow hébergé.
+Aucun workflow GitHub Actions ni image de conteneur n’est déclaré dans le dépôt
+actuel. Ces outils ne sont pas des dépendances de l’installation.
 
 ## 6. Installer les dépendances externes
 
@@ -301,22 +302,45 @@ pas automatiquement un système contenant déjà des paquets tiers.
 bash scripts/build-desktop.sh
 ```
 
-Ce script effectue les opérations suivantes dans cet ordre :
+Le script vérifie Debian 13, refuse root et prend un verrou utilisateur avec
+`flock` (paquet `util-linux`, déjà présent dans `base.txt`). Il compare chaque
+référence demandée avec le fichier local `source-id` et exécute la commande de
+version du binaire. Si ces contrôles réussissent, il réutilise ce composant sans
+réseau ni compilation. Cette vérification n’est pas un audit d’intégrité de tous
+les fichiers ni de compatibilité avec les bibliothèques système.
 
-1. Lit les versions et références dans `packages/versions.env`.
-2. Crée un répertoire de travail temporaire.
-3. Récupère Picom depuis son dépôt officiel au commit fixé et vérifie ce commit.
-4. Configure Picom avec Meson, compile puis installe dans un répertoire utilisateur.
-5. Télécharge l’archive Rofi 2.0.0 depuis la publication officielle.
-6. Vérifie son SHA-256, puis extrait l’archive.
-7. Configure Rofi pour X11, compile, exécute ses tests et installe au même endroit.
-8. Affiche les versions produites et fait pointer `current` vers le nouvel ensemble.
-9. Supprime le répertoire temporaire. En cas d’échec, supprime le nouvel ensemble
-   incomplet et conserve le lien `current` précédent, s’il existait.
+Pour un composant à reconstruire :
 
-Aucun repli automatique vers une autre version n’est prévu si une compilation
-échoue. Le script reconstruit les deux logiciels ensemble ; il ne propose pas
-actuellement d’option pour n’en reconstruire qu’un.
+1. Vérifie la présence des outils, puis crée un ensemble sous `releases/`.
+2. Pour Picom, récupère le commit officiel fixé et vérifie son identifiant.
+3. Pour Rofi, télécharge l’archive officielle, vérifie son SHA-256 et l’extrait.
+4. Configure et compile le composant avec Meson ; exécute également les tests Rofi.
+5. Installe le composant dans son propre préfixe au sein du nouvel ensemble,
+   vérifie que son binaire démarre et écrit sa référence dans `source-id`.
+6. Relie les composants réutilisés à leurs préfixes existants, sans recopier les
+   binaires ni leurs ressources.
+7. Active le nouvel ensemble seulement après réussite de toute la sélection et
+   conserve le précédent dans `previous`.
+
+En cas d’échec, le nouvel ensemble incomplet et le répertoire temporaire sont
+supprimés ; `current` reste inchangé. Les sources temporaires sont également
+supprimées après réussite. Les anciens ensembles ne sont pas purgés.
+
+Après l’installation initiale des deux logiciels, on peut sélectionner un seul
+composant ou forcer sa reconstruction :
+
+```bash
+bash scripts/build-desktop.sh picom
+bash scripts/build-desktop.sh rofi
+bash scripts/build-desktop.sh rofi --force
+bash scripts/build-desktop.sh --help
+```
+
+`--force` ignore la réutilisation pour la sélection. Le script ne détecte pas les
+changements d’options de compilation ou de bibliothèques système : utiliser cette
+option si une reconstruction à référence identique est nécessaire.
+Une ancienne installation sans `source-id` est reconstruite une première fois
+pour chaque composant sélectionné. Elle reste disponible pour un retour arrière.
 
 **4. Vérifier les versions installées.**
 
@@ -353,8 +377,9 @@ Ce dernier contrôle exige l’ensemble du bureau, pas seulement Picom et Rofi.
 
 | Chemin | Contenu |
 |---|---|
-| `~/.local/share/masternaka-debian/releases/` | Ensembles compilés dans des dossiers distincts |
+| `~/.local/share/masternaka-debian/releases/` | Ensembles `desktop.ID`, avec préfixes séparés `picom/`, `rofi/` et liens vers les composants réutilisés |
 | `~/.local/share/masternaka-debian/current` | Lien vers l’ensemble sélectionné |
+| `~/.local/share/masternaka-debian/previous` | Lien vers l’ensemble précédent |
 | `~/.local/share/masternaka-debian/current/bin/` | Binaires Picom et Rofi sélectionnés |
 | `/usr/bin/picom`, `/usr/bin/rofi` | Versions Debian, si installées ; non écrasées |
 
@@ -364,8 +389,19 @@ les dépendances de construction, puis relancer le script. Pour Rofi, actualiser
 le SHA-256 à partir d’une référence vérifiée ; ne jamais désactiver ce contrôle
 simplement pour faire passer un téléchargement différent.
 
-Les anciens ensembles restent dans `releases/`. Pour revenir à un ensemble
-conservé, vérifier son nom puis remplacer uniquement le lien `current` :
+Les anciens ensembles restent dans `releases/`. Le retour arrière habituel est :
+
+```bash
+bash scripts/build-desktop.sh --rollback
+```
+
+Cette commande vérifie les binaires de l’ensemble précédent et échange les liens
+`current` et `previous`, sans compilation ni accès réseau. Une seconde exécution
+revient à l’autre ensemble. Elle ne modifie pas `packages/versions.env` : une
+installation normale réappliquera les références de ce fichier. Se reconnecter
+pour relancer les composants après chaque basculement.
+
+Pour revenir manuellement à un ensemble plus ancien, hors compilation en cours :
 
 ```bash
 ls -1 "$HOME/.local/share/masternaka-debian/releases"
@@ -376,10 +412,38 @@ if [ -x "$previous_release/bin/picom" ] && [ -x "$previous_release/bin/rofi" ]; 
 fi
 ```
 
-Se déconnecter puis se reconnecter pour utiliser ces binaires. Choisir directement
-les versions Debian est également possible avec `/usr/bin/picom` et `/usr/bin/rofi`,
-mais la compatibilité de toute la configuration avec ces versions doit être
-vérifiée : leur présence comme secours ne garantit pas un résultat identique.
+Cette méthode manuelle ne met pas à jour le lien `previous`. Ne pas effacer les
+ensembles anciens individuellement sans examiner les liens : un ensemble actif
+peut réutiliser un composant compilé dans un autre dossier.
+
+### Désactiver les versions compilées
+
+Depuis une console, hors session i3 et sans compilation en cours, archiver tout
+le dossier utilisateur du projet pour retirer les compilations du PATH habituel :
+
+```bash
+archive=$(mktemp -d "$HOME/.local/share/masternaka-debian-disabled.XXXXXXXX")
+mv -- "$HOME/.local/share/masternaka-debian" "$archive/"
+printf 'Archive : %s/masternaka-debian\n' "$archive"
+```
+
+Les paquets Debian et la configuration i3 restent en place. Les liens internes
+absolus de l’archive ne fonctionnent plus à cet emplacement ; ils refonctionnent
+une fois le dossier remis exactement à sa place. Pour annuler, conserver le
+chemin affiché et, si aucun nouveau dossier actif n’a été créé :
+
+```bash
+# Définir archive avec le chemin affiché si le shell a été fermé.
+if [ ! -e "$HOME/.local/share/masternaka-debian" ] && [ ! -L "$HOME/.local/share/masternaka-debian" ]; then
+  mv -- "$archive/masternaka-debian" "$HOME/.local/share/"
+fi
+```
+
+Pour désinstaller définitivement les compilations, supprimer uniquement cette
+archive identifiée après avoir vérifié le retour aux paquets Debian. Ne pas
+supprimer les bibliothèques d’exécution via APT sans examiner les dépendances.
+Les versions `/usr/bin/picom` et `/usr/bin/rofi` ne garantissent pas les mêmes
+effets : adapter et valider la configuration avant de les utiliser en session.
 
 ### En cas d’échec
 
@@ -464,12 +528,7 @@ Sources utilisées pour le choix des versions et les étapes de construction :
 - [Rofi 2.0.0 : publication](https://github.com/davatorium/rofi/releases/tag/2.0.0)
 - [Rofi 2.0.0 : compilation](https://github.com/davatorium/rofi/blob/2.0.0/INSTALL.md)
 
-La liste des paquets de ce document correspond aux manifestes actuels ; la
-compilation et la résolution complète des dépendances Debian n’ont pas encore
-été exécutées. Les six tests locaux et les vérifications de syntaxe Bash ont
-réussi. Le workflow GitHub Actions est fourni mais n’a pas encore été lancé,
-la publication ayant été refusée par l’intégration GitHub.
-
-Une installation Debian complète doit encore valider LightDM, le réseau, le son,
-les animations sur matériel réel, le verrouillage et la reprise après veille.
-Voir `docs/VALIDATION.md` pour les limites actuelles.
+La liste des paquets de ce document correspond aux manifestes actuels. La
+résolution APT, les compilations et la compatibilité graphique ne sont pas
+validées par cet inventaire. Voir [VALIDATION.md](VALIDATION.md) pour les contrôles
+réellement exécutés et les limites restantes.

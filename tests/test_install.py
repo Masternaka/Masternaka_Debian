@@ -65,7 +65,10 @@ class InstallTests(unittest.TestCase):
 
     def test_runtime_has_no_author_network_dependency(self):
         forbidden = ('justaguy.dev', 'codeberg.org', 'drewgrif', 'butterrepo', 'butterscripts', '+kitten themes')
-        for path in [ROOT/'install.sh', *list((ROOT/'i3').rglob('*')), *list((ROOT/'scripts').rglob('*'))]:
+        paths = [ROOT/'install.sh']
+        for directory in ('i3', 'scripts', 'lib', 'packages'):
+            paths.extend((ROOT/directory).rglob('*'))
+        for path in paths:
             if path.is_file():
                 for token in forbidden:
                     self.assertNotIn(token, path.read_text(), str(path))

@@ -1,22 +1,16 @@
-# Publier et tester depuis macOS
+# Travailler depuis macOS
 
-Aucun Linux local n’est nécessaire pour les tests automatisés. GitHub Actions
-utilise un conteneur Debian 13 sur un serveur GitHub.
+Le Mac peut servir à modifier les fichiers et à examiner les changements Git.
+Ne pas y exécuter l’installateur : la cible reste Debian 13.
 
-## Avec GitHub Desktop
+Aucun workflow GitHub Actions n’est actuellement présent dans ce dépôt. Publier
+une branche ne déclenche donc pas les tests Debian décrits dans les anciennes
+versions de ce guide.
 
-1. Extraire l’archive de cette livraison.
-2. Dans GitHub Desktop, cloner `Masternaka/Masternaka_Debian`.
-3. Créer la branche `feat/debian13-autonome`.
-4. Copier le contenu extrait dans le dossier du dépôt, y compris le dossier
-   `.github` et le fichier `.gitignore` (Cmd + Maj + point dans Finder pour les voir).
-   Ne pas copier de dossier `.git` : l’archive fournie n’en contient pas.
-5. Vérifier les changements, créer un commit, puis publier la branche.
-6. Dans l’onglet Actions de GitHub, ouvrir le workflow « Debian 13 ».
-   S’il est désactivé pour le dépôt, l’activer. Une publication de branche le lance.
-7. Transmettre le lien de la branche ou du workflow à l’assistant pour examiner
-   les résultats et corriger les problèmes.
+Les tests complets demandent un environnement Debian 13 jetable. Le script
+`tests/graphics.sh` nécessite en plus un serveur X, par exemple Xvfb, les logiciels
+du bureau et une configuration déployée dans le dossier d’un utilisateur de test
+dédié. Il ne remplace pas un essai complet de connexion, réseau, son et veille.
 
-Le workflow installe les dépendances, compile et teste sans installer Linux sur
-le Mac. Il ne remplace pas l’essai final d’une session Debian complète.
-Ne pas exécuter `install.sh` sur macOS.
+Voir [VALIDATION.md](VALIDATION.md) pour les vérifications déjà effectuées et leurs
+limites. Aucun accès au dépôt d’origine n’est nécessaire pour maintenir ce projet.
