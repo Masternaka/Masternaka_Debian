@@ -1,0 +1,58 @@
+# Un nom de paquet par ligne. Sources : Debian 13 uniquement.
+# Session X11 et connexion
+xorg
+xinit
+dbus-x11
+lightdm
+lightdm-gtk-greeter
+i3-wm
+sxhkd
+xdotool
+x11-xserver-utils
+xss-lock
+i3lock
+# Bureau
+picom
+polybar
+rofi
+dunst
+libnotify-bin
+feh
+xsettingsd
+lxpolkit
+network-manager
+network-manager-gnome
+xfce4-power-manager
+brightnessctl
+# Fichiers et applications
+thunar
+thunar-archive-plugin
+thunar-volman
+file-roller
+gvfs-backends
+gvfs-fuse
+xdg-user-dirs
+xdg-utils
+unzip
+kitty
+firefox-esr
+geany
+flameshot
+qimgv
+gsimplecal
+# Son PipeWire
+pipewire-audio
+pavucontrol
+pulsemixer
+pamixer
+# Polices et apparence sans téléchargement externe
+fonts-dejavu-core
+fonts-font-awesome
+fonts-noto-color-emoji
+gnome-themes-extra
+papirus-icon-theme
+# Utilitaires utilisés par les scripts
+procps
+psmisc
+util-linux
+ca-certificates

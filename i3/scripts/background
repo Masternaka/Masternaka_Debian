@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Fond uni local ou image personnelle, sans téléchargement.
+set -eu
+dir="$HOME/.config/i3"
+if [[ -f "$dir/wallpaper.jpg" ]]; then
+    feh --bg-fill "$dir/wallpaper.jpg"
+else
+    color=$(awk '$1 == "background" {print $2; exit}' "$dir/kitty/colors.conf")
+    xsetroot -solid "${color:-#0d1117}"
+fi

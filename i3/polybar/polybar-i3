@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Adaptation Masternaka, 2026-09-28 : lancement explicite et arrêt borné.
+set -eu
+pkill -u "$(id -u)" -x polybar || true
+for ((n=0; n<30; n++)); do
+    if ! pgrep -u "$(id -u)" -x polybar >/dev/null; then break; fi
+    sleep 0.1
+done
+mapfile -t monitors < <(polybar -m | cut -d: -f1)
+primary=$(polybar -m | awk -F: '/\(primary\)/ {print $1; exit}')
+primary=${primary:-${monitors[0]:-}}
+[[ -n $primary ]] || exit 1
+config="$HOME/.config/i3/polybar/config.ini"
+MONITOR="$primary" polybar -c "$config" example &
+for monitor in "${monitors[@]}"; do
+    [[ $monitor == "$primary" ]] && continue
+    MONITOR="$monitor" polybar -c "$config" example &
+done

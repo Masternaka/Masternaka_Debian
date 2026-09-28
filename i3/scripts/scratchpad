@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Adaptation Masternaka, 2026-09-28 : arguments conservés.
+set -eu
+class=${1:-scratchpad}
+if (($#)); then shift; fi
+[[ $class =~ ^[a-zA-Z0-9_-]+$ ]] || exit 1
+if xdotool search --class "^${class}$" >/dev/null 2>&1; then
+    i3-msg "[class=\"^${class}$\"] scratchpad show"
+elif (($#)); then
+    kitty --config "$HOME/.config/i3/kitty/kitty.conf" --class "$class" -e "$@" &
+else
+    kitty --config "$HOME/.config/i3/kitty/kitty.conf" --class "$class" &
+fi

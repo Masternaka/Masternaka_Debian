@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Dérivé du sélecteur JustAGuyLinux ; adaptation Masternaka, 2026-09-28.
+# Palettes locales, aucun appel à un catalogue de thèmes distant.
+set -euo pipefail
+export PATH="$HOME/.local/share/masternaka-debian/current/bin:$PATH"
+dir="$HOME/.config/i3"
+cfg_get() {
+    awk -v key="$2" -F= '{k=$1; gsub(/^[ \t]+|[ \t]+$/, "", k); if (k==key) {v=$2; gsub(/^[ \t]+|[ \t]+$/, "", v); print v; exit}}' "$1"
+}
+if [[ -n ${1:-} ]]; then
+    target=$1
+else
+    target=$(find "$dir/themes" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort | rofi -dmenu -i -p 'Thème' -theme "$dir/rofi/config.rasi") || exit 0
+fi
+[[ -n $target ]] || exit 0
+[[ $target =~ ^[a-z_]+$ && -d "$dir/themes/$target" ]] || { printf 'Thème inconnu : %s\n' "$target" >&2; exit 1; }
+theme="$dir/themes/$target"
+for file in colors.conf colors.ini colors.rasi kitty.conf theme.conf; do
+    [[ -r "$theme/$file" ]] || { printf 'Thème incomplet : %s\n' "$file" >&2; exit 1; }
+done
+cp "$theme/colors.conf" "$dir/colors.conf"
+cp "$theme/colors.ini" "$dir/polybar/colors.ini"
+cp "$theme/colors.rasi" "$dir/rofi/colors.rasi"
+cp "$theme/kitty.conf" "$dir/kitty/colors.conf"
+for k in frame_global bg_low fg_low frame_low highlight_low bg_normal fg_normal frame_normal highlight_normal bg_critical fg_critical frame_critical highlight_critical; do
+    v=$(cfg_get "$theme/theme.conf" "dunst_$k")
+    if [[ $v =~ ^#[0-9a-fA-F]{6}$ ]]; then
+        sed -i "/# THEME: dunst_$k\$/s/\"#[0-9a-fA-F]*\"/\"$v\"/" "$dir/dunst/dunstrc"
+    fi
+done
+printf '%s\n' "$target" > "$dir/current-theme"
+if [[ -n ${DISPLAY:-} ]]; then
+    i3-msg reload >/dev/null
+    "$dir/polybar/polybar-i3"
+    pkill -u "$(id -u)" -x dunst || true
+    dunst -config "$dir/dunst/dunstrc" >/dev/null 2>&1 &
+    pkill -USR1 -u "$(id -u)" -x kitty || true
+    "$dir/scripts/background"
+fi
+printf 'Thème appliqué : %s\n' "$target"
